@@ -1,0 +1,25 @@
+module.exports = {
+
+    oscOutFilter: function(data) {
+
+        var {address, args, host, port} = data
+
+        if (host == 'midi' && args[0].value == 0) {
+        // if message is midi and channel is 0
+
+            for (var i=0; i<=16; i++) {
+
+                args[0].value = i // change channel
+                send(host, port, address, ...args)
+
+            }
+
+            return
+
+        }
+
+        return data
+
+    }
+
+}
