@@ -1,0 +1,28 @@
+;{===== Header =====
+#NoEnv  ; Recommended for performance and compatibility with future AutoHotkey releases.
+; #Warn  ; Enable warnings to assist with detecting common errors.
+SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
+SetWorkingDir %A_ScriptDir%  ; Ensures a consistent starting directory.
+
+#SingleInstance force
+#Persistent
+#include <AutoHotInterception> ; ! ! ! Without this external library AHI Scripts won't work.
+;}
+
+AHI := new AutoHotInterception()
+
+keyboardId := AHI.GetKeyboardId(0x04F2, 0x0112)
+AHI.SubscribeKeyboard(keyboardId, true, Func("KeyEvent"))
+
+return
+
+KeyEvent(code, state){
+	ToolTip % "Keyboard Key - Code: " code ", State: " state ; A small window near your cursor pops up every time you press any key on a initialized above keyboard shoing you the unique ID/code of that key.
+}
+
+;{============= Maintenance =============================
+^Esc::ExitApp	; Ctrl+Esc to terminate the script
+^!p::Pause    ; Pause script with Ctrl+Alt+P
+^!s::Suspend  ; Suspend script with Ctrl+Alt+S
+^!r::Reload   ; Reload script with Ctrl+Alt+R
+;}
