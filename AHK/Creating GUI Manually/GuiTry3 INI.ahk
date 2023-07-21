@@ -101,7 +101,7 @@ CreateGUI() {
 	; ========= GUI VISUAL VARS ===========
 
 	TabPosition := [5, 28]
-	TabSize := [1200, 400]
+	TabSize := [1134, 300]
 	Tabs := ["Tab 1", "Tab 2"]
 
 	tabContentsSpacingX := 5
@@ -109,10 +109,6 @@ CreateGUI() {
 	padding := 5
 	tabYpadding := 25
 	defaultButtonSize := 40
-
-	; ; ; for tracking highest coordinates
-	; tabContentsMaxX := 0
-	; tabContentsMaxY := 0
 
 
 	; params:
