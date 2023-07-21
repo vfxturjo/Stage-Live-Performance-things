@@ -1,56 +1,145 @@
 #SingleInstance
 #Include Midi2.ahk
+#Include helpers.ahk
+
+OnExit(bye)
+bye(*) {
+    midi.CloseMidiOuts()
+}
 
 midi := AHKMidi()
+midi.OpenMidiOut(0)
 maxKey := 0
+transpose := 0
 
-; window := gui('+LastFound +AlwaysOnTop -SysMenu')
-; WinSetTransparent 225
-; window.SetFont 's11', 'Segoe UI'
-; guiText := window.add('text', 'w180 h300')
-; statusBar := window.add('StatusBar')
-; window.OnEvent 'close', (*) => bye()
+
+; { Creating Midi player window
+window := gui('+LastFound +AlwaysOnTop -SysMenu')
+WinSetTransparent 225
+window.SetFont 's11', 'Segoe UI'
+guiText := window.add('text', 'w180 h300')
+statusBar := window.add('StatusBar')
 ; window.show(), info()
-
-
-; ; ; ; ; CLONING THIS
-; layout := '10 1E 2C 11 1F 2D 12 20 2E 13 21 2F 14 22 30 15 23 31 16 24 32 17 25 33 18 26 34 19 27 35 1A 28 36 1B 2B 148 1C'
-
-
-; ; HotIf (wnd := 'ahk_class ' WinGetClass(), (*) => WinActive(wnd))
-; for code in StrSplit(layout, ' ') {
-;     Hotkey GetKeyName("SC" code), tester.Bind(A_Index)
-;     hotkey GetKeyName('SC' code), press2.bind(A_Index)
-;     hotkey GetKeyName('SC' code) ' up', release2.bind(A_Index)
-
-;     maxKey++
+window.show()
 ; }
 
 
-press2(key, *) {
-    MsgBox key
+; ; ; ; ; ; CLONING THIS
+; layout := '10 1E 2C 11 1F 2D 12 20 2E 13 21 2F 14 22 30 15 23 31 16 24 32 17 25 33 18 26 34 19 27 35 1A 28 36 1B 2B 148 1C'
 
-    midi.MidiOut("N1", 1, 60, 120)
 
-    ; midi.MidiOutRawData(createMidiRawData(60))
-    ; press(key)
-    ; guiUpdate()
+; { READING CSV
+kbdUI_AllKBDinfo := Map()
+
+KeyGroup := 1
+KeyName := 2
+iniKeyName := 3
+Xpos := 4
+Ypos := 5
+Xsize := 6
+Ysize := 7
+KeyCode := 8
+VKCode := 9
+
+TotalNumOfKeys := 0
+
+Loop read, "csv/KeyboardButtonInfos nikhut.csv"
+{
+    LineNumber := A_Index
+    if (LineNumber == 1)
+        continue
+
+    tempObj := []
+    Loop parse, A_LoopReadLine, "CSV"
+    {
+        ; skipping first line
+        tempObj.Push(A_LoopField)
+        TotalNumOfKeys++
+    }
+
+    ; AllKBDinfo.Push([LineNumber, tempObj])
+    kbdUI_AllKBDinfo.Set(LineNumber - 1, tempObj)
 }
-release2(key, *) {
-    midi.MidiOut("N0", 1, 60, 120)
-    ; midi.MidiOutRawData(createMidiRawData(60))
-    ; release(key)
-    ; guiUpdate()
+; }
+
+; { reading keyBinding files
+KeyBindingsFile := IniRead("settings.ini", "general", "currentKeyBindingsFileName", "")
+KeyBindingsFolder := IniRead("settings.ini", "general", "keyBindingsFolder", "")
+; }
+
+AvailableFunctions := ["midi"]
+
+for entry in kbdUI_AllKBDinfo {
+    vals := kbdUI_AllKBDinfo[entry]
+
+    ; { reading INI for settings
+    thisKeySetting := IniRead(KeyBindingsFolder "/" KeyBindingsFile, "keys", vals[iniKeyName], "")
+    if thisKeySetting != ""
+    {
+        thisKeySetting := StrSplit(thisKeySetting, A_Space)
+
+        ; if first part has error
+        if (!IsItemInList(thisKeySetting[1], AvailableFunctions)) {
+            ToolTip("THERE ARE SOME ERROR IN INI FILE, CHECK FUNCTIONS")
+        }
+        ; if second part has error
+        if (thisKeySetting[1] == "midi") {
+            if thisKeySetting.Length != 2 {
+                ToolTip("THERE ARE SOME ERROR IN INI FILE, CHECK MIDI PARAMs")
+            }
+            else {
+                ; send midi IF Window is in focus
+                HotIf (wnd := 'ahk_class ' WinGetClass(), (*) => WinActive(wnd))
+
+                hotkey GetKeyName('VK' vals[VKCode]), PressMidiNote.bind(A_Index, GetNoteID(thisKeySetting[2]))
+                hotkey GetKeyName('VK' vals[VKCode]) ' up', ReleaseMidiNote.bind(A_Index, GetNoteID(thisKeySetting[2]))
+            }
+        }
+    }
+}
+; }
+
+
+; pressedKeys := Map() ; map based
+pressedKeysArray := []
+pressedKeysArray.Capacity := 120
+loop 120 {
+    pressedKeysArray.Push(0)
 }
 
-1:: {
-    SendAllNoteOff()
-    SendAllSoundOff()
-    return
+PressMidiNote(key, note, *) {
+    global transpose
+    ; if (pressedKeys.Has(key) && pressedKeys[key] == 1)
+    ;     return
+    if (pressedKeysArray[key] == 0) {
+        midi.MidiOut("N1", 1, note + transpose, 120)
+        ; pressedKeys[key] := 1
+        pressedKeysArray[key] := 1
+        guiUpdate()
+    }
+
+}
+ReleaseMidiNote(key, note, *) {
+    global transpose
+    ; if pressedKeys.Has(key) and (pressedKeys[key] == 1) {
+    if pressedKeysArray[key] == 1 {
+
+        midi.MidiOut("N0", 1, note + transpose, 120)
+        ; pressedKeys[key] := 0
+        pressedKeysArray[key] := 0
+        guiUpdate()
+    }
 }
 
 
-; MIDI RESETTERs
+; 1:: {
+;     SendAllNoteOff()
+;     SendAllSoundOff()
+;     return
+; }
+
+
+; { MIDI RESETTERs
 SendAllNoteOff(ch := 1)
 {
     dwMidi := (176 + ch) + (123 << 8) + (0 << 16)
@@ -68,22 +157,7 @@ SendResetAllController(ch := 1)
     dwMidi := (176 + ch) + (121 << 8) + (0 << 16)
     midi.MidiOutRawData(dwMidi)
 }
-;
-;
-;
-;
-
-
-; ; ; how Midi Raw data is created
-; midiSend 0x90, abs(note), (note > 0) * vel
-
-; midiSend(cmd, note, vel := 0) =>
-;     DllCall('winmm\midiOutShortMsg', 'UInt', midiOutdeviceID, 'UInt', cmd + a.channel | note << 8 | vel << 16)
-
-createMidiRawData(note, vel := 120) {
-    return 0x90 + 1 | note << 8 | vel << 16
-}
-
+; }
 
 ;
 ;
@@ -91,7 +165,15 @@ createMidiRawData(note, vel := 120) {
 ;
 ;;
 
-; #HotIf WinActive(wnd)
+
+#HotIf WinActive(wnd)
+; Mintainance
+Home:: {
+    Reload
+}
+PgUp:: {
+    ExitApp
+}
 ; RAlt:: a.isSustain := !a.isSustain, info()
 ; AppsKey:: a.isBends := !a.isBends, info()
 ; Space up:: (a.isPalmMute) || mute()
@@ -157,71 +239,23 @@ createMidiRawData(note, vel := 120) {
 ; F12:: {
 ;     a.firstNote += a.firstNote < 72, info()
 ; }
-Home:: {
-    Reload
-}
-PgUp:: {
-    ExitApp
-}
 ; #HotIf
 
 
-; guiUpdate() {
-;     static tones := ['n1', 'b2', 'n2', 'b3', 'n3', 'n4', 'b5', 'n5', 'b6', 'n6', 'b7', 'n7']
-;     row0 := row1 := row2 := chord := ''
-;     loop maxKey
-;         row%mod(A_Index - 1, 3)% .= savedKeys.has(A_Index) ? '⚫' : '⚪'
-;     if savedKeys.count {
-;         notes := []
-;         for i, midi in (redundant := map(), savedMidi) {
-;             for j, nextMidi in savedMidi
-;                 if j > i && mod(nextMidi, 12) = mod(midi, 12)
-;                     redundant[nextMidi] := 1
-;             redundant.has(midi) || notes.push(midi)
-;         }
-;         chordLen := notes.length
-;         if chordLen = 1
-;             chord := '`n' noteName(notes[1], 0)
-;         else
-;             loop chordLen {
-;                 n1 := b2 := n2 := b3 := n3 := n4 := b5 := n5 := b6 := n6 := b7 := n7 := 0
-;                 for midi in notes
-;                     %tones[mod(abs(midi - notes[1]), 12) + 1]%++
-;                 mi3 := b3 && !n3,
-;                     aug := !b3 && n3 && !n5 && b6,
-;                     dim := mi3 && b5 && !n5 && !n7,
-;                     dim7 := dim && n6,
-;                     hdim := dim && !n6 && b7,
-;                     no3 := !b3 && !n3 && n5,
-;                     sus2 := no3 && n2 && !n4,
-;                     sus4 := no3 && !n2 && n4,
-;                     is6 := !dim && n6,
-;                     is7 := !dim && (b7 || n7),
-;                     is9 := !sus2 && n2,
-;                     is11 := !sus4 && n4,
-;                     b9 := b2 ? '(♭9)' : '',
-;                     n9 := !is7 && is9 ? '(9)' : '',
-;                         s9 := b3 && n3 ? '(♯9)' : '',
-;                             n11 := !is7 && is11 ? '(11)' : '',
-;                                 s11 := !dim && b5 ? '(' (n5 ? '♯11' : '♭5') ')' : '',
-;                                     b13 := !aug && b6 ? '(' (n5 ? '♭13' : '♯5') ')' : '',
-;                                         root := noteName(notes[1], 0),
-;                                         type := no3 && chordLen = 2 ? 5 : aug ? '+' : hdim ? 'ø' : dim7 ? '⁰7' : dim ? '⁰' : mi3 ? 'm' : '',
-;                                             six := !is7 && is6 ? 6 : '',
-;                                                 maj := is7 && !b7 ? 'maj' : '',
-;                                                     dom := is7 ? is6 ? 13 : is11 ? 11 : is9 ? 9 : 7 : '',
-;                                                         sus := sus2 ? 'sus2' : sus4 ? 'sus4' : '',
-;                                                             add := ' ' StrReplace(b9 n9 s9 n11 s11 b13, ')(', ', '),
-;                                                                 chord .= '`n' root type six maj dom sus add
-;                 if A_Index = chordLen
-;                     break
-;                 while notes[1] < notes[chordLen]
-;                     notes[1] += 12
-;                 notes.push notes.RemoveAt(1)
-;             }
-;     }
-;     guiText.value := row0 '`n ' row1 '`n   ' row2 chord
-; }
+guiUpdate() {
+
+    ; showlist() {
+    ;     for index, value in pressedKeysArray
+    ;         if (value == 1)
+    ;             return index "`n"
+    ;     return ""
+    ;     ; for pressedKeys
+    ; }
+
+    ; guiText.value := showlist()
+    ; ; todo: make it show the notes
+
+}
 
 ; info() {
 ;     WinSetTitle noteName(a.firstNote) ' (' a.octIndex + 2 '-' a.octIndex + 5 '), vel ' a.velocity ', ch ' a.channel + 1

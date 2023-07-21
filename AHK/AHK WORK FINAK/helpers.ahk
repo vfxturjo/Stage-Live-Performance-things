@@ -70,3 +70,30 @@ askForValidInput(insideText, windowName, regexMatchStr, wrongTollTipText := "Che
 ; 		ErrorList.Push(e)
 ; 	}
 ; }
+
+noteName(note, isOctave := 1) {
+    static abc := ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B']
+    return abc[mod(note, 12) + 1] (isOctave ? note // 12 - 1 : '')
+}
+
+GetNoteID(note)
+{
+    ; Extract note name and octave using regex
+    match := Array([])
+    regexMatch(note, "(\D+)(\d+)", &match)
+    ; note_name := match[1] ,,,,, octave := match[2]
+    return 12 * match[2] + Map(
+        "C", 0,
+        "C#", 1,
+        "D", 2,
+        "D#", 3,
+        "E", 4,
+        "F", 5,
+        "F#", 6,
+        "G", 7,
+        "G#", 8,
+        "A", 9,
+        "A#", 10,
+        "B", 11
+    )[match[1]]
+}

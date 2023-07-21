@@ -19,12 +19,12 @@
 ; C Majorにしておくと何も変更されない通常通りの動作となります。起動し直すとC Majorに戻ります。
 
 
-#Warn  ; Enable warnings to assist with detecting common errors.
+#Warn; Enable warnings to assist with detecting common errors.
 ;SendMode Input  ; Recommended for new scripts due to its superior speed and reliability.
 
 ; 設定ファイルのパス
 Global settingFilePath
-if(!IsSet(settingFilePath)){
+if (!IsSet(settingFilePath)) {
     settingFilePath := A_ScriptDir . "\AHK-MIDI-Transformer2.ini"
 }
 
@@ -42,7 +42,7 @@ midi.delegate := midiTransformer
 
 ; 必須初期化おわり
 
-If (FileExist(A_LineFile . "\..\icon.ico")){
+If (FileExist(A_LineFile . "\..\icon.ico")) {
     TraySetIcon(A_LineFile . "\..\icon.ico")
 }
 
@@ -57,19 +57,19 @@ If (FileExist(A_LineFile . "\..\icon.ico")){
 ; オールノートオフを送信する
 SendAllNoteOff(ch := 1)
 {
-    dwMidi := (176+ch) + (123 << 8) + (0 << 16)
+    dwMidi := (176 + ch) + (123 << 8) + (0 << 16)
     midi.MidiOutRawData(dwMidi)
 }
 
 SendAllSoundOff(ch := 1)
 {
-    dwMidi := (176+ch) + (120 << 8) + (0 << 16)
+    dwMidi := (176 + ch) + (120 << 8) + (0 << 16)
     midi.MidiOutRawData(dwMidi)
 }
 
 SendResetAllController(ch := 1)
 {
-    dwMidi := (176+ch) + (121 << 8) + (0 << 16)
+    dwMidi := (176 + ch) + (121 << 8) + (0 << 16)
     midi.MidiOutRawData(dwMidi)
 }
 
@@ -109,8 +109,8 @@ Class AHKMT
 
     ; オートスケール
     static autoScaleKey := 1 ;1==C ~ 12==B
-    static autoScale    := 1 ;1==Major 2==Minor 3==H-Minor 4==M-Minor
-    static octaveShift  := 0
+    static autoScale := 1 ;1==Major 2==Minor 3==H-Minor 4==M-Minor
+    static octaveShift := 0
     ; 一時的にオフにするとき用
     static autoScaleOff := False
 
@@ -157,9 +157,9 @@ Class AHKMT
         allCCLAbel := "AMTMidiControlChange"
         altLabel := allCCLAbel . event.controller
 
-        If ( this.specificProcessCallback ){
+        If (this.specificProcessCallback) {
             processPrefix := __GetProcessLabel()
-        }else{
+        } else {
             processPrefix := False
         }
         If (GetKeyState("Ctrl"))
@@ -167,19 +167,19 @@ Class AHKMT
             allCCLAbel := allCCLAbel . "Ctrl"
             altLabel := altLabel . "Ctrl"
         }
-        If ( processPrefix ){
+        If (processPrefix) {
             processLabel := processPrefix . altLabel
-            If ( HasMethod(this.delegate, processLabel, 1) )
+            If (HasMethod(this.delegate, processLabel, 1))
             {
                 event.eventHandled := True
                 this.delegate.%processLabel%(event)
             }
             processLabel := processPrefix . allCCLAbel
-            If (!event.eventHandled && HasMethod(this.delegate, processLabel, 1) )
+            If (!event.eventHandled && HasMethod(this.delegate, processLabel, 1))
             {
                 event.eventHandled := True
                 this.delegate.%processLabel%(event)
-            } 
+            }
         }
 
         If (!event.eventHandled && HasMethod(this.delegate, altLabel, 1))
@@ -194,13 +194,13 @@ Class AHKMT
             ;Gosub %allCCLAbel%
         }
 
-        If (!event.eventHandled){
+        If (!event.eventHandled) {
             cc := event.controller
             If (cc == AHKMT.fixedVelocityCC)
             {
-                If (GetKeyState("Ctrl")){
+                If (GetKeyState("Ctrl")) {
                     this.ccCtrlFunc.Call(event)
-                } else If (GetKeyState("Shift")){
+                } else If (GetKeyState("Shift")) {
                     this.ccShiftFunc.Call(event)
                 } else {
                     this.ccFunc.Call(event)
@@ -211,7 +211,7 @@ Class AHKMT
         }
 
         ;設定ウィンドウがアクティブなら情報表示
-        if(this.IsSettingWindowVisible())
+        if (this.IsSettingWindowVisible())
         {
             If (!event.eventHandled)
             {
@@ -226,7 +226,7 @@ Class AHKMT
         event.eventHandled := True
     }
 
-    
+
     ; fixed velocity
     MidiNoteOn(event)
     {
@@ -236,9 +236,9 @@ Class AHKMT
         altLabel := noteOnLabel . event.noteNumber
         noteNameLabel := noteOnLabel . event.noteName
         newNum := 0
-        If ( this.specificProcessCallback ){
+        If (this.specificProcessCallback) {
             processPrefix := __GetProcessLabel()
-        }else{
+        } else {
             processPrefix := False
         }
         If (GetKeyState("Ctrl"))
@@ -248,21 +248,21 @@ Class AHKMT
             noteNameLabel := noteNameLabel . "Ctrl"
         }
 
-        If ( processPrefix ){
+        If (processPrefix) {
             processLabel := processPrefix . altLabel
-            If ( HasMethod(this.delegate, processLabel, 1) )
+            If (HasMethod(this.delegate, processLabel, 1))
             {
                 event.eventHandled := True
                 this.delegate.%processLabel%(event)
             }
             processLabel := processPrefix . noteNameLabel
-            If (!event.eventHandled &&  HasMethod(this.delegate, processLabel, 1) )
+            If (!event.eventHandled && HasMethod(this.delegate, processLabel, 1))
             {
                 event.eventHandled := True
                 this.delegate.%processLabel%(event)
             }
             processLabel := processPrefix . noteOnLabel
-            If (!event.eventHandled &&  HasMethod(this.delegate, processLabel, 1) )
+            If (!event.eventHandled && HasMethod(this.delegate, processLabel, 1))
             {
                 event.eventHandled := True
                 this.delegate.%processLabel%(event)
@@ -303,7 +303,7 @@ Class AHKMT
             If (AHKMT.fixedVelocity > 0 && AHKMT.fixedVelocity < 128)
             {
                 newVel := AHKMT.fixedVelocity
-            }else{
+            } else {
                 newVel := event.velocity
             }
             newNum := TransformMidiNoteNumber(event.noteNumber)
@@ -311,14 +311,14 @@ Class AHKMT
         }
 
         ;設定ウィンドウがアクティブなら情報表示
-        if( this.IsSettingWindowVisible() )
+        if (this.IsSettingWindowVisible())
         {
             If (!event.eventHandled)
             {
                 ; Determine the octave of the note in the scale
                 ;noteOctaveNumber := Floor( event.noteNumber / AHKMT.MIDI_NOTE_SIZE )
                 ; Create a friendly name for the note and octave, ie: "C4"
-                newNoteName := AHKMT.MIDI_NOTES[ Mod( newNum, AHKMT.MIDI_NOTE_SIZE ) + 1 ] . AHKMidi.MIDI_OCTAVES[ Floor( newNum / AHKMT.MIDI_NOTE_SIZE ) + 1 ]
+                newNoteName := AHKMT.MIDI_NOTES[Mod(newNum, AHKMT.MIDI_NOTE_SIZE) + 1] . AHKMidi.MIDI_OCTAVES[Floor(newNum / AHKMT.MIDI_NOTE_SIZE) + 1]
                 logTxt := event.noteNumber . " (" . event.noteName . ") vel:" . event.velocity . " -> " . newNum . " (" . newNoteName . ") vel:" . newVel
             }
             else
@@ -337,27 +337,27 @@ Class AHKMT
         noteOffLabel := "AMTMidiNoteOff"
         altLabel := noteOffLabel . event.noteNumber
         noteNameLabel := noteOffLabel . event.noteName
-        If ( this.specificProcessCallback ){
+        If (this.specificProcessCallback) {
             processPrefix := __GetProcessLabel()
-        }else{
+        } else {
             processPrefix := False
         }
 
-        If ( processPrefix ){
+        If (processPrefix) {
             processLabel := processPrefix . altLabel
-            If ( HasMethod(this.delegate, processLabel, 1) )
+            If (HasMethod(this.delegate, processLabel, 1))
             {
                 event.eventHandled := True
                 this.delegate.%processLabel%(event)
             }
             processLabel := processPrefix . noteNameLabel
-            If (!event.eventHandled &&  HasMethod(this.delegate, processLabel, 1) )
+            If (!event.eventHandled && HasMethod(this.delegate, processLabel, 1))
             {
                 event.eventHandled := True
                 this.delegate.%processLabel%(event)
             }
             processLabel := processPrefix . noteOffLabel
-            If (!event.eventHandled &&  HasMethod(this.delegate, processLabel, 1) )
+            If (!event.eventHandled && HasMethod(this.delegate, processLabel, 1))
             {
                 event.eventHandled := True
                 this.delegate.%processLabel%(event)
@@ -423,7 +423,7 @@ Class AHKMT
     {
         AHKMT.settingGui := Gui("", "AHK-MIDI-Transformer Setting")
         AHKMT.settingGui.OnEvent("Escape", GuiEscape)
-        
+
         voicingsList := []
         For Key, Value in AHKMT.VOICING_NAMES
         {
@@ -439,14 +439,14 @@ Class AHKMT
         AHKMT.SFVTxt := AHKMT.settingGui.Add("Text", "vSFVTxt x380 y16 w53 h30 +0x200", AHKMT.fixedVelocity)
 
         AHKMT.settingGui.Add("Text", "x0 y64 w110 h30 +0x200 Right", "Auto Scale:")
-        AHKMT.SScaleKey :=AHKMT.settingGui.Add("DropDownList", "AltSubmit x120 y64 w78", ["C","C#/Db","D","D#/Eb","E","F","F#/Gb","G","G#/Ab","A","A#/Bb","B"])
-        AHKMT.SScaleKey.OnEvent("Change", SScaleKeyChanged) 
+        AHKMT.SScaleKey := AHKMT.settingGui.Add("DropDownList", "AltSubmit x120 y64 w78", ["C", "C#/Db", "D", "D#/Eb", "E", "F", "F#/Gb", "G", "G#/Ab", "A", "A#/Bb", "B"])
+        AHKMT.SScaleKey.OnEvent("Change", SScaleKeyChanged)
 
-        AHKMT.SScale :=AHKMT.settingGui.Add("DropDownList", "AltSubmit x208 y64 w90", AHKMT.MIDI_SCALES)
+        AHKMT.SScale := AHKMT.settingGui.Add("DropDownList", "AltSubmit x208 y64 w90", AHKMT.MIDI_SCALES)
         AHKMT.SScale.OnEvent("Change", SScaleChanged)
         AHKMT.settingGui.Add("Text", "x302 y64 w64 h30 +0x200 +Right", "Octave:")
-        
-        AHKMT.SOctv :=AHKMT.settingGui.Add("DropDownList", "x374 y64 w50", ["-4","-3","-2","-1","0","1","2","3","4"])
+
+        AHKMT.SOctv := AHKMT.settingGui.Add("DropDownList", "x374 y64 w50", ["-4", "-3", "-2", "-1", "0", "1", "2", "3", "4"])
         AHKMT.SOctv.OnEvent("Change", OctvChanged)
 
         ; AHKMT.SBKCEnabled :=AHKMT.settingGui.Add("CheckBox", "x16 y142 w156 h30", "Chord in Black Key")
@@ -460,15 +460,15 @@ Class AHKMT
         ; AHKMT.SBKCPitch :=AHKMT.settingGui.Add("DropDownList", "x370 y142 w50", ["0","1","2","3","4","5"])
         ; AHKMT.SBKCPitch.OnEvent("Change", BKCChanged)
 
-        AHKMT.SWKCEnabled :=AHKMT.settingGui.Add("CheckBox", "x16 y104 w160 h34", "Chord in White Key")
+        AHKMT.SWKCEnabled := AHKMT.settingGui.Add("CheckBox", "x16 y104 w160 h34", "Chord in White Key")
         AHKMT.SWKCEnabled.OnEvent("Click", WKCChanged)
 
         AHKMT.settingGui.Add("Text", "x230 y104 w76 h30 +0x200 +Right", "Voicing:")
 
-        AHKMT.SVoicing :=AHKMT.settingGui.Add("DropDownList", "AltSubmit x320 y104 w110", voicingsList)
+        AHKMT.SVoicing := AHKMT.settingGui.Add("DropDownList", "AltSubmit x320 y104 w110", voicingsList)
         AHKMT.SVoicing.OnEvent("Change", VoicingChanged)
 
-        AHKMT.SLogTxt :=AHKMT.settingGui.Add("Text", "vSLogTxt x16 y190 w380 h26 +0x200", "")
+        AHKMT.SLogTxt := AHKMT.settingGui.Add("Text", "vSLogTxt x16 y190 w380 h26 +0x200", "")
         ;Gui 7: Font
     }
 
@@ -484,14 +484,14 @@ Class AHKMT
         ;Gui 9:-MinimizeBox -MaximizeBox
         AHKMT.messagePanelGui.SetFont("s60")
         ;Gui 9:Font, s60
-        AHKMT.MsgTxt :=AHKMT.messagePanelGui.Add("Text", "x0 y16 w360 h62 +0x200 Center", AHKMT.fixedVelocity)
+        AHKMT.MsgTxt := AHKMT.messagePanelGui.Add("Text", "x0 y16 w360 h62 +0x200 Center", AHKMT.fixedVelocity)
         ;Gui 9:Font
     }
 
     IsSettingWindowVisible()
     {
         styl := WinGetStyle(AHKMT.settingGui.Hwnd)
-        if (styl & 0x10000000){
+        if (styl & 0x10000000) {
             return true
         }
         return false
@@ -500,13 +500,12 @@ Class AHKMT
 }
 
 
-
 TransformMidiNoteNumber(originalNoteNumber)
 {
     noteNumber := AHKMT.octaveShift * AHKMT.MIDI_NOTE_SIZE + originalNoteNumber
     If (!AHKMT.autoScaleOff && noteNumber >= 0 && noteNumber <= 127)
     {
-        noteScaleNumber := Mod( noteNumber, AHKMT.MIDI_NOTE_SIZE )
+        noteScaleNumber := Mod(noteNumber, AHKMT.MIDI_NOTE_SIZE)
         noteNumber := noteNumber + AHKMT.SCALE_SHIFTS[AHKMT.autoScale][noteScaleNumber + 1]
 
         If (AHKMT.autoScaleKey != 1)
@@ -540,49 +539,49 @@ TryBlackKeyChord(event, isNoteOn)
     {
         Return
     }
-    If (InStr(event.note, "s") == 0){
+    If (InStr(event.note, "s") == 0) {
         Return
     }
     rootKey := ((AHKMT.blackKeyChordRootKey + 2) * 12) + 1
     rootPitch := ((AHKMT.blackKeyChordRootPitch + 2) * 12)
     ;ルートのC#からの差分を求め
     diff := event.noteNumber - rootKey
-    if(diff == 0)
+    if (diff == 0)
     {
         key := 0
     }
     ;黒鍵の差分　  -17 -15 -12|-10 -7 -5 -3  0  2  5  7  9|12 14 17
     ;鳴らしたい音  -12|-10 -8  -7  -5 -3 -1  0  2  4  5  7  9 11|12
-    else if(diff > 0)
+    else if (diff > 0)
     {
         ;何番目の黒鍵なのか調べる
-        num := Floor(Mod(diff, 12)/2) + Floor(diff/12)*5
+        num := Floor(Mod(diff, 12) / 2) + Floor(diff / 12) * 5
         ;スケール内でその順番にあるノートを調べる
-        keys := [0,2,4,5,7,9,11]
+        keys := [0, 2, 4, 5, 7, 9, 11]
         key := keys[Mod(num, 7) + 1]
-        if(num>=7){
-            key := key + (Floor(num/7))*12
+        if (num >= 7) {
+            key := key + (Floor(num / 7)) * 12
         }
     }
     else
     {
         diff := Abs(diff)
         modVal := Mod(diff, 12)
-        num := Floor((modVal==0 ? 0 : modVal-1)/2) + Floor(diff/12)*5
-        keys := [0,1,3,5,7,8,10]
+        num := Floor((modVal == 0 ? 0 : modVal - 1) / 2) + Floor(diff / 12) * 5
+        keys := [0, 1, 3, 5, 7, 8, 10]
         key := keys[Mod(num, 7) + 1]
-        if(num>=7){
-            key := key + (Floor(num/7))*12
+        if (num >= 7) {
+            key := key + (Floor(num / 7)) * 12
         }
         key := -key
     }
-    
+
     MidiOutChord(key + rootPitch, event.velocity, isNoteOn)
     event.eventHandled := True
     ; if(isNoteOn){
     ;     ShowMessagePanel(num . ":" . key, "test")
     ; }
-} 
+}
 
 ; コードCルートのノートを渡すとAutoScale考慮してコードを鳴らす
 MidiOutChord(noteNumber, vel, isNoteOn := True)
@@ -590,13 +589,13 @@ MidiOutChord(noteNumber, vel, isNoteOn := True)
     If (AHKMT.fixedVelocity > 0 && AHKMT.fixedVelocity < 128)
     {
         newVel := AHKMT.fixedVelocity
-    }else{
+    } else {
         newVel := vel
     }
-    If (isNoteOn){
-        MidiStatus :=  143 + 1
-    }else{
-        MidiStatus :=  127 + 1
+    If (isNoteOn) {
+        MidiStatus := 143 + 1
+    } else {
+        MidiStatus := 127 + 1
     }
 
     keys := AHKMT.SCALE_KEYS[AHKMT.autoScale]
@@ -605,19 +604,19 @@ MidiOutChord(noteNumber, vel, isNoteOn := True)
     diff2 := 0
     For i, key In AHKMT.MAJOR_KEYS
     {
-        if(diff<=key){
-            diff2 := i-1
+        if (diff <= key) {
+            diff2 := i - 1
             Break
         }
     }
-    
+
     noteNumber := noteNumber - diff
     noteNumber := TransformMidiNoteNumber(noteNumber)
     ; 度数
-    if(AHKMT.VOICING_CHORDS[AHKMT.chordVoicing].Length >= 7){
-        chord := AHKMT.VOICING_CHORDS[AHKMT.chordVoicing][diff2+1]
+    if (AHKMT.VOICING_CHORDS[AHKMT.chordVoicing].Length >= 7) {
+        chord := AHKMT.VOICING_CHORDS[AHKMT.chordVoicing][diff2 + 1]
         oneChord := False
-    }else{
+    } else {
         chord := AHKMT.VOICING_CHORDS[AHKMT.chordVoicing][1]
         oneChord := True
     }
@@ -634,26 +633,26 @@ MidiOutChord(noteNumber, vel, isNoteOn := True)
         octave := 0
         tone := 0
         chordNote := StrReplace(chordNote, "!", "", , &cnt)
-        ;StringReplace, chordNote, chordNote, ! , , All 
-        If (cnt > 0){
+        ;StringReplace, chordNote, chordNote, ! , , All
+        If (cnt > 0) {
             octave := -1
         }
         chordNote := StrReplace(chordNote, "#", "", , &cnt)
-        ;StringReplace, chordNote, chordNote, # , , All 
-        If (cnt > 0){
+        ;StringReplace, chordNote, chordNote, # , , All
+        If (cnt > 0) {
             tone += 1
         }
         chordNote := StrReplace(chordNote, "b", "", , &cnt)
-        ;StringReplace, chordNote, chordNote, b , , All 
-        If (cnt > 0){
+        ;StringReplace, chordNote, chordNote, b , , All
+        If (cnt > 0) {
             tone -= 1
         }
-        if(oneChord){
+        if (oneChord) {
             chordNote += diff2
         }
         chordNote -= 1
-        val1 := Mod(chordNote, 7)+1
-        diff3 := Floor(chordNote/7)*12
+        val1 := Mod(chordNote, 7) + 1
+        diff3 := Floor(chordNote / 7) * 12
         shft := keys[val1]
 
         note := noteNumber + shft + diff3 + (octave * 12) + tone
@@ -669,18 +668,18 @@ MidiOutChord(noteNumber, vel, isNoteOn := True)
 ; fixedVelocityを変更するCCが来たらパネルを表示
 SetFixedVelocityFromCC(event)
 {
-    If (AHKMT.CCMode==0){
+    If (AHKMT.CCMode == 0) {
         AHKMT.fixedVelocity := event.value
-    }else{
+    } else {
         step := 1
-        If (AHKMT.fixedVelocity <= 100 && AHKMT.fixedVelocityCCStep > 0 && AHKMT.fixedVelocityCCStep < 20){
+        If (AHKMT.fixedVelocity <= 100 && AHKMT.fixedVelocityCCStep > 0 && AHKMT.fixedVelocityCCStep < 20) {
             step := AHKMT.fixedVelocityCCStep
         }
-        AHKMT.fixedVelocity := AHKMT.fixedVelocity + (event.value - 64)*step
+        AHKMT.fixedVelocity := AHKMT.fixedVelocity + (event.value - 64) * step
     }
-    If (AHKMT.fixedVelocity > 127){
+    If (AHKMT.fixedVelocity > 127) {
         AHKMT.fixedVelocity := 127
-    }else if(AHKMT.fixedVelocity < 0){
+    } else if (AHKMT.fixedVelocity < 0) {
         AHKMT.fixedVelocity := 0
     }
 
@@ -704,11 +703,11 @@ SetAutoScaleFromCC(event, showPanel := true)
             } else {
                 __setAutoScaleFromCCCnt++
             }
-            if(__setAutoScaleFromCCCnt < 5 ){
+            if (__setAutoScaleFromCCCnt < 5) {
                 return
             }
             __setAutoScaleFromCCCnt := 0
-            if (AHKMT.autoScale = 1){
+            if (AHKMT.autoScale = 1) {
                 SetAutoScale(key, 2, showPanel)
                 return
             }
@@ -718,10 +717,10 @@ SetAutoScaleFromCC(event, showPanel := true)
             }
             SetAutoScale(key, 1, showPanel)
 
-        }else{
+        } else {
             if (__setAutoScaleFromCCCnt > 0) {
                 __setAutoScaleFromCCCnt := 0
-            }else{
+            } else {
                 __setAutoScaleFromCCCnt--
             }
             if (__setAutoScaleFromCCCnt > -5) {
@@ -733,7 +732,7 @@ SetAutoScaleFromCC(event, showPanel := true)
                 return
             }
             key--
-            if(key < 1){
+            if (key < 1) {
                 key := 12
             }
             SetAutoScale(key, 2, showPanel)
@@ -783,7 +782,7 @@ SetAutoScale(key, scale, showPanel := False)
     AHKMT.autoScaleKey := key
     AHKMT.autoScale := scale
     UpdateSettingWindow()
-    If (showPanel){
+    If (showPanel) {
         str := AHKMT.MIDI_NOTES[key] . " " . AHKMT.MIDI_SCALES_S[scale]
         ShowMessagePanel(str, "Auto Scale")
     }
@@ -806,7 +805,7 @@ SetOctaveShift(octv, showPanel := False)
     }
     AHKMT.octaveShift := octv
     UpdateSettingWindow()
-    If (showPanel){
+    If (showPanel) {
         str := AHKMT.octaveShift
         ShowMessagePanel(str, "Octave Shift")
     }
@@ -814,7 +813,7 @@ SetOctaveShift(octv, showPanel := False)
 
 SetChordInBlackKey(isEnabled, rootKey, rootPitch)
 {
-    AHKMT.blackKeyChordEnabled := (isEnabled ? 1:0)
+    AHKMT.blackKeyChordEnabled := (isEnabled ? 1 : 0)
     AHKMT.blackKeyChordRootKey := rootKey
     AHKMT.blackKeyChordRootPitch := rootPitch
     updateSettingWindow()
@@ -823,10 +822,10 @@ SetChordInBlackKey(isEnabled, rootKey, rootPitch)
 
 SetChordInBlackKeyEnabled(isEnabled, showPanel := False)
 {
-    AHKMT.blackKeyChordEnabled := (isEnabled ? 1:0)
+    AHKMT.blackKeyChordEnabled := (isEnabled ? 1 : 0)
     updateSettingWindow()
-    If (showPanel){
-        str := "CBK:" . (AHKMT.blackKeyChordEnabled ? "ON":"OFF")
+    If (showPanel) {
+        str := "CBK:" . (AHKMT.blackKeyChordEnabled ? "ON" : "OFF")
         ShowMessagePanel(str, "ChordInBlackKey")
     }
     SendAllNoteOff()
@@ -845,10 +844,10 @@ SetChordInBlackKeyRootPitch(rootPitch)
 }
 SetChordInWhiteKeyEnabled(isEnabled, showPanel := False)
 {
-    AHKMT.whiteKeyChordEnabled := (isEnabled ? 1:0)
+    AHKMT.whiteKeyChordEnabled := (isEnabled ? 1 : 0)
     updateSettingWindow()
-    If (showPanel){
-        str := "CWK:" . (AHKMT.whiteKeyChordEnabled ? "ON":"OFF")
+    If (showPanel) {
+        str := "CWK:" . (AHKMT.whiteKeyChordEnabled ? "ON" : "OFF")
         ShowMessagePanel(str, "ChordInWhiteKey")
     }
     SendAllNoteOff()
@@ -861,7 +860,7 @@ AddVoicing(name, voicing)
     voicingsList := ""
     For Key, Value in AHKMT.VOICING_NAMES
     {
-        voicingsList .= "|" . Value 
+        voicingsList .= "|" . Value
     }
     ;GuiControl, 7:, SVoicing, %voicingsList%
     AHKMT.SVoicing.Text := voicingsList
@@ -876,11 +875,10 @@ SetVoicing(num)
 ; 設定ウィンドウ
 
 
-
 ; Esc押したら閉じる
-GuiEscape(GuiObj){
+GuiEscape(GuiObj) {
     GuiObj.Hide()
-; Gui ,7: Cancel
+    ; Gui ,7: Cancel
 }
 
 
@@ -909,18 +907,18 @@ UpdateSettingWindow()
 
 }
 
-SScaleKeyChanged(GuiCtrlObj, Info){
+SScaleKeyChanged(GuiCtrlObj, Info) {
     AHKMT.autoScaleKey := AHKMT.SScaleKey.Value
     SendAllNoteOff()
 }
 
-SScaleChanged(GuiCtrlObj, Info){
+SScaleChanged(GuiCtrlObj, Info) {
     ;GuiControlGet, outputVar, 7:, SScale
     AHKMT.autoScale := GuiCtrlObj.Value
     SendAllNoteOff()
 }
 
-OctvChanged(GuiCtrlObj, Info){
+OctvChanged(GuiCtrlObj, Info) {
     ;GuiControlGet, outputVar, 7:, SOctv
     AHKMT.octaveShift := AHKMT.SOctv.Text
     SendAllNoteOff()
@@ -933,19 +931,19 @@ OctvChanged(GuiCtrlObj, Info){
 ;     SendAllNoteOff()
 ; }
 
-WKCChanged(GuiCtrlObj, Info){
+WKCChanged(GuiCtrlObj, Info) {
     AHKMT.whiteKeyChordEnabled := AHKMT.SWKCEnabled.Value
     SendAllNoteOff()
 }
 
-VoicingChanged(GuiCtrlObj, Info){
+VoicingChanged(GuiCtrlObj, Info) {
     ;GuiControlGet, outputVar, 7:, SVoicing
     AHKMT.chordVoicing := GuiCtrlObj.Value
     SendAllNoteOff()
 }
 
 ; 設定ウィンドウのスライダーが動いたら
-SlidrChanged(GuiCtrlObj, Info){
+SlidrChanged(GuiCtrlObj, Info) {
     ;GuiControlGet, outputVar, 7:, SFVSlidr
     AHKMT.fixedVelocity := GuiCtrlObj.Value
     updateSettingWindow()
@@ -971,28 +969,26 @@ ShowMessagePanel(txt, title := "Message")
     SetTimer HideSettingCCFV, -1000
 }
 
-HideSettingCCFV(){
+HideSettingCCFV() {
     ;Gui 9:Hide
     AHKMT.messagePanelGui.Hide()
     SetTimer HideSettingCCFV, 0
 }
 
 
-
-
 ; 設定読み込み/保存
 LoadSettingValue(name, defaultVal)
 {
-    If (not FileExist(settingFilePath)){
-      return defaultVal
+    If ( not FileExist(settingFilePath)) {
+        return defaultVal
     }
-    try{
+    try {
         result := IniRead(settingFilePath, "mySettings", name)
-        If (result != "ERROR"){
+        If (result != "ERROR") {
             return result
         }
         return defaultVal
-    }catch{
+    } catch {
     }
     return defaultVal
 }
@@ -1008,7 +1004,7 @@ LoadSetting()
     AHKMT.blackKeyChordRootPitch := Integer(LoadSettingValue("blackKeyChordRootPitch", AHKMT.blackKeyChordRootPitch))
     AHKMT.chordVoicing := Integer(LoadSettingValue("chordVoicing", AHKMT.chordVoicing))
 
-    If (AHKMT.VOICING_CHORDS.Length < AHKMT.chordVoicing){
+    If (AHKMT.VOICING_CHORDS.Length < AHKMT.chordVoicing) {
         ;chordVoicing := 1
     }
 }
@@ -1031,6 +1027,6 @@ SaveSetting()
     ; IniWrite fixedVelocity, settingFilePath, "mySettings", "fixedVelocity"
 }
 
-ExitFunc(ExitReason, ExitCode){
+ExitFunc(ExitReason, ExitCode) {
     SaveSetting()
 }
