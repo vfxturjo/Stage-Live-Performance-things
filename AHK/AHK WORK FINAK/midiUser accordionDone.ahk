@@ -77,7 +77,9 @@ KeyBindingsFile := IniRead("settings.ini", "general", "currentKeyBindingsFileNam
 KeyBindingsFolder := IniRead("settings.ini", "general", "keyBindingsFolder", "")
 ; }
 
-AvailableFunctions := ["midi"]
+AvailableFunctions := ["app", "midi"]
+AvailableAppFunctions := ["exit", "reload"]
+AvailableMidiFunctions := ["bend", "sust", "trans", "channel", "velocity", "mute"]
 
 for entry in kbdUI_AllKBDinfo {
     vals := kbdUI_AllKBDinfo[entry]
@@ -93,37 +95,134 @@ for entry in kbdUI_AllKBDinfo {
             ToolTip("THERE ARE SOME ERROR IN INI FILE, CHECK FUNCTIONS")
         }
         ; if second part has error
-        if (thisKeySetting[1] == "midi") {
-            if thisKeySetting.Length != 2 {
-                ToolTip("THERE ARE SOME ERROR IN INI FILE, CHECK MIDI PARAMs")
+        if (thisKeySetting[1] == "app") {
+            if (!IsItemInList(thisKeySetting[2], AvailableAppFunctions)) {
+                ToolTip("problem with app hotkeys! SC:" vals[SCcode])
+            } else {
+                HotIf (wnd := 'ahk_class ' WinGetClass(), (*) => WinActive(wnd))
+                SCcodeID := Format("{:x}", vals[SCcode])
+                hotkey("~*SC" SCcodeID, AppKeyPress.bind(A_Index, thisKeySetting[2]))
             }
-            else {
+        }
+        if (thisKeySetting[1] == "midi") {
+            if (!IsItemInList(thisKeySetting[2], AvailableMidiFunctions)) {
+                ; * data not available in function. Must be a note OR ERROR
+
                 ; send midi IF Window is in focus
                 HotIf (wnd := 'ahk_class ' WinGetClass(), (*) => WinActive(wnd))
-
+                SCcodeID := Format("{:x}", vals[SCcode])
                 ; ; ; VK STYLE KEYMAPPING. WORKS mtmt
-                try {
-
-                    hotkey GetKeyName('VK' vals[VKCode]), PressMidiNote.bind(A_Index, GetNoteID(thisKeySetting[2]))
-                    hotkey GetKeyName('VK' vals[VKCode]) ' up', ReleaseMidiNote.bind(A_Index, GetNoteID(thisKeySetting[2]))
-                }
-                catch {
-                    MsgBox "problem with VK:" vals[VKCode]
-                }
-
-                ; ; ; SC Style keymapping
                 ; try {
-                ;     hotkey("~*SC" Format("{:01d}", vals[SCcode]), PressMidiNote.bind(A_Index, GetNoteID(thisKeySetting[2])))
-                ;     hotkey("~*SC" Format("{:01d}", vals[SCcode]) ' up', ReleaseMidiNote.bind(A_Index, GetNoteID(thisKeySetting[2])))
+
+                ;     hotkey GetKeyName('VK' vals[VKCode]), PressMidiNote.bind(A_Index, GetNoteID(thisKeySetting[2]))
+                ;     hotkey GetKeyName('VK' vals[VKCode]) ' up', ReleaseMidiNote.bind(A_Index, GetNoteID(thisKeySetting[2]))
                 ; }
                 ; catch {
-                ;     MsgBox "problem with SC:" vals[SCcode]
+                ;     MsgBox "problem with VK:" vals[VKCode]
                 ; }
+
+                ; ; ; SC Style keymapping
+                try {
+                    hotkey("~*SC" SCcodeID, PressMidiNote.bind(A_Index, GetNoteID(thisKeySetting[2])))
+                    hotkey("~*SC" SCcodeID ' up', ReleaseMidiNote.bind(A_Index, GetNoteID(thisKeySetting[2])))
+                }
+                catch {
+                    MsgBox "problem with SC:" vals[SCcode]
+                }
+            }
+            else
+            {
+                ; * data matches with AvailableMidiFunctions.
+                if (thisKeySetting[2] == "bend") {
+                    try {
+                        HotIf (wnd := 'ahk_class ' WinGetClass(), (*) => WinActive(wnd))
+                        SCcodeID := Format("{:x}", vals[SCcode])
+                        hotkey("~*SC" SCcodeID, bendPitchPress.bind(A_Index, thisKeySetting[3]))
+                        hotkey("~*SC" SCcodeID ' up', bendPitchRelease.bind(A_Index, thisKeySetting[3]))
+                    }
+                    catch {
+                        MsgBox "problem with pitch bend, SC:" vals[SCcode]
+                    }
+
+                }
+                if (thisKeySetting[2] == "sust") {
+                    try {
+                        HotIf (wnd := 'ahk_class ' WinGetClass(), (*) => WinActive(wnd))
+                        SCcodeID := Format("{:x}", vals[SCcode])
+                        hotkey("~*SC" SCcodeID, SustainPedalPress.bind(A_Index, thisKeySetting[3]))
+                        hotkey("~*SC" SCcodeID ' up', SustainPedalRelease.bind(A_Index, thisKeySetting[3]))
+                    }
+                    catch {
+                        MsgBox "problem with sustain pedal, SC:" vals[SCcode]
+                    }
+
+                }
+                if (thisKeySetting[2] == "trans") {
+                    try {
+                        HotIf (wnd := 'ahk_class ' WinGetClass(), (*) => WinActive(wnd))
+                        SCcodeID := Format("{:x}", vals[SCcode])
+                        hotkey("~*SC" SCcodeID, transposeKeyPress.bind(A_Index, thisKeySetting[3]))
+                        hotkey("~*SC" SCcodeID ' up', transposeKeyRelease.bind(A_Index, thisKeySetting[3]))
+                    }
+                    catch {
+                        MsgBox "problem with Transpose, SC:" vals[SCcode]
+                    }
+
+                }
+                if (thisKeySetting[2] == "channel") {
+                    try {
+                        HotIf (wnd := 'ahk_class ' WinGetClass(), (*) => WinActive(wnd))
+                        SCcodeID := Format("{:x}", vals[SCcode])
+                        hotkey("~*SC" SCcodeID, ChannelKeyPress.bind(A_Index, thisKeySetting[3]))
+                        hotkey("~*SC" SCcodeID ' up', ChannelKeyRelease.bind(A_Index, thisKeySetting[3]))
+                    }
+                    catch {
+                        MsgBox "problem with Transpose, SC:" vals[SCcode]
+                    }
+                }
+                if (thisKeySetting[2] == "velocity") {
+                    try {
+                        HotIf (wnd := 'ahk_class ' WinGetClass(), (*) => WinActive(wnd))
+                        SCcodeID := Format("{:x}", vals[SCcode])
+                        hotkey("~*SC" SCcodeID, VelocityKeyPress.bind(A_Index, thisKeySetting[3]))
+                        hotkey("~*SC" SCcodeID ' up', VelocityKeyRelease.bind(A_Index, thisKeySetting[3]))
+                    }
+                    catch {
+                        MsgBox "problem with Transpose, SC:" vals[SCcode]
+                    }
+
+                }
+                if (thisKeySetting[2] == "mute") {
+                    try {
+                        HotIf (wnd := 'ahk_class ' WinGetClass(), (*) => WinActive(wnd))
+                        SCcodeID := Format("{:x}", vals[SCcode])
+                        hotkey("~*SC" SCcodeID, MuteKeyPress.bind(A_Index, thisKeySetting[3]))
+                        hotkey("~*SC" SCcodeID ' up', MuteKeyRelease.bind(A_Index, thisKeySetting[3]))
+                    }
+                    catch {
+                        MsgBox "problem with Transpose, SC:" vals[SCcode]
+                    }
+
+                }
             }
         }
     }
 }
+
 ; #endregion
+
+; #region Transpose PRESS AND RELEASE
+
+AppKeyPress(keyIndex, function, *) {
+    if (function == "exit") {
+        ExitApp
+    }
+    if (function == "reload") {
+        Reload
+    }
+}
+; #endregion
+
 
 ; #region PressedKeysArray. PressedNotesArray
 pressedKeysArray := []
@@ -164,6 +263,144 @@ ReleaseMidiNote(keyIndex, note, *) {
     guiUpdate()
 }
 ; #endregion
+
+; #region pressPitchBend
+bendPitchPress(keyIndex, bendAmount, *) {
+    global BendableNotes
+    if BendableNotes {
+        bend(bendAmount)
+    }
+    guiUpdate4()
+}
+
+bendPitchRelease(keyIndex, bendAmount, *) {
+    global BendableNotes
+    if BendableNotes {
+        bend(bendAmount, 1)
+    }
+    guiUpdate4()
+}
+; #endregion
+
+; #region SUSTAIN AND MUTE PRESS AND RELEASE
+global sustainPedalKeyPressed := 0
+SustainPedalPress(keyIndex, Press_or_Toggle, *) {
+    global sustainPedalKeyPressed
+    if (sustainPedalKeyPressed == 1) {
+        return
+    }
+    sustainPedalKeyPressed := 1
+
+    if Press_or_Toggle == "press" {
+        global SustainPedalON := !SustainPedalON
+    }
+    else if (Press_or_Toggle == "toggle") { ; if toggle, just change once when pressed.
+        ; dont change back when released
+        global SustainPedalON := !SustainPedalON
+    }
+
+    info()
+}
+
+SustainPedalRelease(keyIndex, Press_or_Toggle, *) {
+    global sustainPedalKeyPressed := 0
+
+    if Press_or_Toggle == "press" {
+        global SustainPedalON := !SustainPedalON
+    }
+
+    info()
+}
+
+global MuteKeyPressed := 0
+MuteKeyPress(keyIndex, MuteOnPress_or_Release, *) {
+    global MuteKeyPressed
+    if (MuteKeyPressed == 1) {
+        return
+    }
+    MuteKeyPressed := 1
+
+    if MuteOnPress_or_Release == "press" {
+        mute()
+        guiUpdate()
+    }
+}
+
+MuteKeyRelease(keyIndex, MuteOnPress_or_Release, *) {
+    global MuteKeyPressed := 0
+
+    if MuteOnPress_or_Release == "release" {
+        mute()
+        guiUpdate()
+    }
+}
+; #endregion
+
+; #region Transpose PRESS AND RELEASE
+global transposeKeyPressed := 0
+transposeKeyPress(keyIndex, transposeAmount, *) {
+    global transposeKeyPressed
+    if (transposeKeyPressed == 1) {
+        return
+    }
+    transposeKeyPressed := 1
+
+    global transpose := (Abs(transpose) + transposeAmount > maxTranspose) ? transpose : transpose := transpose - transposeAmount
+
+    info()
+}
+
+transposeKeyRelease(keyIndex, transposeAmount, *) {
+    global transposeKeyPressed := 0
+}
+; #endregion
+
+; #region Channel PRESS AND RELEASE
+global ChannelKeyPressed := 0
+ChannelKeyPress(keyIndex, ChannelPlusOrMinus, *) {
+    global ChannelKeyPressed
+    if (ChannelKeyPressed == 1) {
+        return
+    }
+    ChannelKeyPressed := 1
+
+    mute()
+    if ChannelPlusOrMinus > 0 {
+        global channel += channel < 15
+    } else {
+        global channel -= channel > 0
+    }
+    info()
+}
+
+ChannelKeyRelease(keyIndex, transposeAmount, *) {
+    global ChannelKeyPressed := 0
+}
+; #endregion
+
+; #region Velocity PRESS AND RELEASE
+global VelocityKeyPressed := 0
+VelocityKeyPress(keyIndex, VelocityPlusOrMinus, *) {
+    global VelocityKeyPressed
+    if (VelocityKeyPressed == 1) {
+        return
+    }
+    VelocityKeyPressed := 1
+
+    if VelocityPlusOrMinus > 0 {
+        global velocity += (velocity < 127) * (10 - 3 * (velocity = 120))
+    } else {
+        global velocity -= (velocity > 0) * (10 - 3 * (velocity = 127))
+    }
+
+    info()
+}
+
+VelocityKeyRelease(keyIndex, transposeAmount, *) {
+    global VelocityKeyPressed := 0
+}
+; #endregion
+
 
 ; #region FUNCS MIDI RESETTERs
 SendAllNoteOff(ch := 1)
@@ -257,10 +494,10 @@ bend(PBsemitones, ret := 0, ms := PitchBendStepSpeed) {
 ; #region HOTKEYS MANUAL
 #HotIf WinActive(wnd)
 ; #region Mintainance
-Home:: {
+^Home:: {
     Reload
 }
-PgUp:: {
+^End:: {
     ExitApp
 }
 ; #endregion
