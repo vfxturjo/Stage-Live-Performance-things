@@ -3,8 +3,8 @@
 kb := AllKeyBinder(MyFunc)
 return
 
-MyFunc(code, name, state) {
-    ToolTip("Key Code: " code ", Name: " name ", State: " state)
+MyFunc(SCcode, codeVK, name, state) {
+    ToolTip("Key Code: " SCcode ", VK:" codeVK ", Name: " name ", State: " state)
 }
 
 ^Esc::

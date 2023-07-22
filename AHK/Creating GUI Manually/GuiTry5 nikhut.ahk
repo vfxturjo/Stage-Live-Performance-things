@@ -151,7 +151,7 @@ CreateGUI() {
 	; TA := [10, 30] 		; actual tab usable location offset
 	TAx := TabPosition[1] + 5
 	TAy := TabPosition[2] + 27
-	TabSize := [1200, 400]
+	TabSize := [1050, 360]
 	Tabs := ["KeyboardUI", "ErrorLog"]
 
 

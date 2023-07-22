@@ -82,8 +82,8 @@ Esc:: {
   bend(-2, , 4), mute(), DllCall('Sleep', 'UInt', 175), pitch(0)
 }
 ScrollLock:: {
-  (savedKeys.count) || a.bendRange := a.bendRange = 2 ? 12 :
-} 2
+  (savedKeys.count) || a.bendRange := a.bendRange = 2 ? 12 : 2
+}
 Left:: {
   octave -1
 }
@@ -100,11 +100,11 @@ F4:: {
   mute(), a.channel += a.channel < 15, info()
 }
 F6:: {
-  a.velocity -= (a.velocity > 0) * (10 - 3 * (a.velocity = 127)),
-} info()
+  a.velocity -= (a.velocity > 0) * (10 - 3 * (a.velocity = 127)), info()
+}
 F7:: {
-  a.velocity += (a.velocity < 127) * (10 - 3 * (a.velocity = 120)),
-} info()
+  a.velocity += (a.velocity < 127) * (10 - 3 * (a.velocity = 120)), info()
+}
 F11:: {
   a.firstNote -= a.firstNote > 24, info()
 }

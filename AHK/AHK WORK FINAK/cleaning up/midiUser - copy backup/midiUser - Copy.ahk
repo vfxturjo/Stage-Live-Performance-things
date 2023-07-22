@@ -174,72 +174,88 @@ Home:: {
 PgUp:: {
     ExitApp
 }
+
+; ; ; ; Muting
 ; RAlt:: a.isSustain := !a.isSustain, info()
-; AppsKey:: a.isBends := !a.isBends, info()
 ; Space up:: (a.isPalmMute) || mute()
 ; 2:: mute
 ; 3::
 ; 4:: mute 0
 ; 1::
+
+; ; ; ; ; Bending
+; AppsKey:: a.isBends := !a.isBends, info()
+
+; ; Bend Range
+; ScrollLock:: {
+;   (savedKeys.count) || a.bendRange := a.bendRange = 2 ? 12 : 2
+; }
+
 ; SC29:: (a.isBends) ? bend(2) : octave()
 ; 1 up::
 ; SC29 up:: {
-;     (a.isBends) ? bend(-2, 1) : 0
+;   (a.isBends) ? bend(-2, 1) : 0
 ; }
-
 ; Tab:: {
-;     (a.isBends) ? bend(1) : octave(1)
+;   (a.isBends) ? bend(1) : octave(1)
 ; }
-
 ; Tab up:: {
-;     (a.isBends) ? bend(-1, 1) : 0
+;   (a.isBends) ? bend(-1, 1) : 0
 ; }
 ; CapsLock:: {
-;     (a.isBends) ? bend(-1) : octave(-1)
+;   (a.isBends) ? bend(-1) : octave(-1)
 ; }
 ; CapsLock up:: {
-;     (a.isBends) ? bend(1, 1) : 0
+;   (a.isBends) ? bend(1, 1) : 0
 ; }
 ; LShift:: {
-;     (a.isBends) ? bend(-2) : 0
+;   (a.isBends) ? bend(-2) : 0
 ; }
 ; LShift up:: {
-;     (a.isBends) ? bend(2, 1) : 0
+;   (a.isBends) ? bend(2, 1) : 0
 ; }
+
+
 ; Esc:: {
-;     bend(-2, , 4), mute(), DllCall('Sleep', 'UInt', 175), pitch(0)
+;   bend(-2, , 4), mute(), DllCall('Sleep', 'UInt', 175), pitch(0)
 ; }
-; ScrollLock:: {
-;     (savedKeys.count) || a.bendRange := a.bendRange = 2 ? 12 : 2
-; }
+
+; ; ; ; Transpose
 ; Left:: {
-;     octave -1
+;   octave -1
 ; }
 ; Right:: {
-;     octave 1
+;   octave 1
 ; }
 ; Down:: {
-;     octave
+;   octave
 ; }
-; F3:: {
-;     mute(), a.channel -= a.channel > 0, info()
-; }
-; F4:: {
-;     mute(), a.channel += a.channel < 15, info()
-; }
-; F6:: {
-;     a.velocity -= (a.velocity > 0) * (10 - 3 * (a.velocity = 127)), info()
-; }
-; F7:: {
-;     a.velocity += (a.velocity < 127) * (10 - 3 * (a.velocity = 120)), info()
-; }
+
 ; F11:: {
-;     a.firstNote -= a.firstNote > 24, info()
+;   a.firstNote -= a.firstNote > 24, info()
 ; }
 ; F12:: {
-;     a.firstNote += a.firstNote < 72, info()
+;   a.firstNote += a.firstNote < 72, info()
 ; }
-; #HotIf
+
+
+; ; ; ; Channel
+; F3:: {
+;   mute(), a.channel -= a.channel > 0, info()
+; }
+; F4:: {
+;   mute(), a.channel += a.channel < 15, info()
+; }
+
+; ; ; ; Velocity
+; F6:: {
+;   a.velocity -= (a.velocity > 0) * (10 - 3 * (a.velocity = 127)), info()
+; }
+; F7:: {
+;   a.velocity += (a.velocity < 127) * (10 - 3 * (a.velocity = 120)), info()
+; }
+
+#HotIf
 
 
 guiUpdate() {
