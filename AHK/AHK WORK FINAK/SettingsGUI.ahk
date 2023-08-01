@@ -2,51 +2,11 @@
 ;AutoGUI 2.5.8
 ;Auto-GUI-v2 credit to Alguimist autohotkey.com/boards/viewtopic.php?f=64&t=89901
 ;AHKv2converter credit to github.com/mmikeww/AHK-v2-script-converter
-#Include helpers.ahk
+#Include _deps\helpers.ahk
+#Include _deps\_global.ahk
 
 ; error log
 ErrorList := []
-
-; { READING CSV
-kbdUI_AllKBDinfo := Map()
-
-KeyGroup := 1
-KeyName := 2
-iniKeyName := 3
-Xpos := 4
-Ypos := 5
-Xsize := 6
-Ysize := 7
-KeyCode := 8
-KeyCodeSC := 9
-
-TotalNumOfKeys := 0
-
-Loop read, "csv/KeyboardButtonInfos nikhut.csv"
-{
-	LineNumber := A_Index
-	if (LineNumber == 1)
-		continue
-
-	tempObj := []
-	Loop parse, A_LoopReadLine, "CSV"
-	{
-		; skipping first line
-		tempObj.Push(A_LoopField)
-		TotalNumOfKeys++
-	}
-
-	; AllKBDinfo.Push([LineNumber, tempObj])
-	kbdUI_AllKBDinfo.Set(LineNumber - 1, tempObj)
-}
-
-; }
-
-
-; { reading settings
-;Filename := "settings.ini"
-;Section := "general"
-; }
 
 ; { reading keyBinding files
 KeyBindingsFile := IniRead("settings.ini", "general", "currentKeyBindingsFileName", "")
@@ -63,7 +23,6 @@ refresh_keyBindings_Files()
 ; reading keyBindings and files
 ; TODO: if file not found, then what?
 Section := "keys"
-AvailableFunctions := ["midi"]
 ; }
 
 
@@ -137,13 +96,20 @@ CreateGUI() {
 	MenuBar_Storage := MenuBar() ; add everything here
 
 	FileMenu := Menu() ; initialize a menu
-	; FileMenu.Add("exit", exitFunc)
+	FileMenu.Add("Reload", (*) => (Reload()))
+	FileMenu.Add("Exit", (*) => (ExitApp()))
 	MenuBar_Storage.Add("&File", FileMenu) ; add it to the storage
 
 	; finally, add it to GUI
 	myGui.MenuBar := MenuBar_Storage
 
 	; }
+
+	global statusBar := MyGui.AddStatusBar(, "Status Bar")
+	statusBar_setLastError(text) {
+		global statusBar
+		statusBar.Text := "(check log) Errors found... " text
+	}
 
 
 	; ========= GUI VISUAL VARS ===========
@@ -222,7 +188,7 @@ CreateGUI() {
 			; storing data
 			kbdUI_keysMap[kbdUI_Keys_id].KeyGroup := vals[KeyGroup]
 			kbdUI_keysMap[kbdUI_Keys_id].KeyName := vals[KeyName]
-			kbdUI_keysMap[kbdUI_Keys_id].KeyCode := vals[KeyCode]
+			kbdUI_keysMap[kbdUI_Keys_id].KeyCode := vals[iniKeyName]
 			kbdUI_keysMap[kbdUI_Keys_id].iniKeyName := vals[iniKeyName]
 
 			; { reading INI for settings
@@ -233,7 +199,13 @@ CreateGUI() {
 
 				; if first part has error
 				if (!IsItemInList(thisKeySetting[1], AvailableFunctions)) {
-					ToolTip("THERE ARE SOME ERROR IN INI FILE, CHECK FUNCTIONS")
+					statusBar_setLastError("error with " vals[iniKeyName])
+					ErrorList.Push(
+						"KeyBinding Error:::`tfile: " KeyBindingsFile
+						"`tkey: " vals[iniKeyName]
+						" `t`t FUNCTION not available"
+					)
+
 					kbdUI_keysMap[kbdUI_Keys_id].function := "Not Set"
 				}
 				else {
@@ -241,13 +213,49 @@ CreateGUI() {
 				}
 
 				; if second part has error
-				if (thisKeySetting[1] == "midi") {
-					if thisKeySetting.Length != 2 {
-						ToolTip("THERE ARE SOME ERROR IN INI FILE, CHECK MIDI PARAMs")
+				if (thisKeySetting[1] == "app") {
+					try {
+						if (IsItemInList(thisKeySetting[2], AvailableAppFunctions)) {
+							IF thisKeySetting.Length > 2 {
+								kbdUI_keysMap[kbdUI_Keys_id].functionMidi := (thisKeySetting[2] . "`n" . thisKeySetting[3])
+							}
+							else {
+								kbdUI_keysMap[kbdUI_Keys_id].functionMidi := ("APP`n" thisKeySetting[2])
+							}
+						}
+						else {
+							kbdUI_keysMap[kbdUI_Keys_id].functionMidi := "ERROR"
+						}
+					} catch Error as e {
+						statusBar_setLastError("error with " vals[iniKeyName])
+						ErrorList.Push(
+							"KeyBinding Error:::`tfile: " KeyBindingsFile
+							"`tkey: " vals[iniKeyName]
+							" `t`t app -> FUNCTION not available"
+						)
+
 						kbdUI_keysMap[kbdUI_Keys_id].functionMidi := " "
 					}
-					else {
-						kbdUI_keysMap[kbdUI_Keys_id].functionMidi := thisKeySetting[2]
+				}
+
+				; if second part has error
+				if (thisKeySetting[1] == "midi") {
+					try {
+						if (IsItemInList(thisKeySetting[2], AvailableMidiFunctions)) {
+							kbdUI_keysMap[kbdUI_Keys_id].functionMidi := (thisKeySetting[2] . "`n" . thisKeySetting[3])
+						}
+						else {
+							kbdUI_keysMap[kbdUI_Keys_id].functionMidi := "ERROR"
+						}
+					} catch Error as e {
+						statusBar_setLastError("error with " vals[iniKeyName])
+						ErrorList.Push(
+							"KeyBinding Error:::`tfile: " KeyBindingsFile
+							"`tkey: " vals[iniKeyName]
+							" `t`t midi -> FUNCTION not available"
+						)
+
+						kbdUI_keysMap[kbdUI_Keys_id].functionMidi := " "
 					}
 				}
 			}
@@ -271,11 +279,14 @@ CreateGUI() {
 	; { configuring tab 2
 
 	Tab.UseTab(2)
-	ErrorLogsListBox := myGui.Add("ListBox", "r20 w700", ["ERRORS AND WARNINGS SHOWN HERE"])
-	myGui.Add("Button", "yp", "⟳").OnEvent("Click", (*) => (
+	Tab.OnEvent("Change", refreshErrorLogList)
+	ErrorLogsListBox := myGui.Add("ListBox", "r20 w900", ["ERRORS AND WARNINGS SHOWN HERE"])
+	myGui.Add("Button", "yp w100 h100", "⟳").OnEvent("Click", refreshErrorLogList)
+
+	refreshErrorLogList(*) {
 		ErrorLogsListBox.Delete()
-		ErrorLogsListBox.Add(ErrorList))
-	)
+		ErrorLogsListBox.Add(ErrorList)
+	}
 
 	; }
 
@@ -292,7 +303,7 @@ CreateGUI() {
 	{
 		button.Text := "EDITING`nTHIS"
 
-		inputResult := askForValidInput("example: C#5", "MidiOut for " button.KeyName, "([a-zA-Z]#\d|[a-zA-Z]\d)")
+		inputResult := askForValidInput2("example: C#5", "MidiOut for " button.KeyName, "([a-zA-Z]#\d|[a-zA-Z]\d)")
 		if (inputResult != -1) {
 
 			IniWrite("midi " inputResult, KeyBindingsFile, Section, button.iniKeyName)
@@ -311,13 +322,9 @@ CreateGUI() {
 			button.Text := button.KeyName
 		}
 
-
 	}
 
-
-	; { show GUI
-	ogSB := MyGui.AddStatusBar(, "Status Bar")
 	myGui.Show()
-	; }
+
 	Return myGui
 }

@@ -45,11 +45,11 @@ Loop 2 {
 
 	start := starts[devType]
 	UpdateWidth(0, 1) ; Reset max width
-	
+
 	; Add device entries
 	Loop 10 {
 		i := start + A_Index
-		if (!DeviceList.Has(i)){
+		if (!DeviceList.Has(i)) {
 			continue
 		}
 		dev := DeviceList[i]
@@ -59,7 +59,7 @@ Loop 2 {
 		chkDevice.OnEvent("Click", CheckboxChanged.Bind(dev.id))
 
 		lowest := UpdateLowest(chkDevice)
-		strings[A_index] := {vid:FormatHex(dev.VID), pid: FormatHex(dev.PID), handle: dev.Handle}
+		strings[A_index] := { vid: FormatHex(dev.VID), pid: FormatHex(dev.PID), handle: dev.Handle }
 
 		textVidPid := monitorGui.Add("Text", "x" columnX[devType] + idW " y" rowY - vhOff, "VID / PID:`t0x" strings[A_index].vid ", 0x" strings[A_index].pid)
 		maxWidths[devType] := UpdateWidth(textVidPid)
@@ -71,7 +71,7 @@ Loop 2 {
 	; Add copy buttons
 	Loop 10 {
 		i := start + A_Index
-		if (!DeviceList.Has(i)){
+		if (!DeviceList.Has(i)) {
 			continue
 		}
 		dev := DeviceList[i]
@@ -80,7 +80,7 @@ Loop 2 {
 
 		btnCopyVidPid := monitorGui.Add("Button", "x" xpos " y" rowY - vhOff " h14 w" copyW, "Copy")
 		btnCopyVidPid.OnEvent("Click", CopyClipboard.Bind("0x" strings[A_index].vid ", 0x" strings[A_index].pid))
-		
+
 		btnCopyHandle := monitorGui.Add("Button", "x" xpos " y" rowY + vhOff " h14 w" copyW, "Copy")
 		btnCopyHandle.OnEvent("Click", CopyClipboard.Bind(strings[A_index].handle))
 	}
@@ -95,7 +95,7 @@ lowest += 2 * MarginY
 chkFilterPress := monitorGui.Add("CheckBox", "x" columnX["K"] " y" lowest, "Only show key releases")
 chkFilterPress.OnEvent("Click", FilterPress)
 
-chkFilterMove :=  monitorGui.Add("CheckBox", "x" columnX["M"] " w" totalWidths[devType] " yp Checked", "Filter Movement (Warning: Turning off can cause crashes)")
+chkFilterMove := monitorGui.Add("CheckBox", "x" columnX["M"] " w" totalWidths[devType] " yp Checked", "Filter Movement (Warning: Turning off can cause crashes)")
 chkFilterMove.OnEvent("Click", FilterMove)
 
 lowest += 2 * MarginY
@@ -121,7 +121,7 @@ monitorGui.Show("w" (marginX * 3) + totalWidths["K"] + totalWidths["M"] " h" mar
 return
 
 
-GetColX(devType){
+GetColX(devType) {
 	global marginX, idW, maxWidths, copyW
 	if (devType == "K")
 		return marginX
@@ -129,33 +129,33 @@ GetColX(devType){
 		return (marginX * 2) + idW + maxWidths["K"] + copyW
 }
 
-UpdateLowest(ctrl){
+UpdateLowest(ctrl) {
 	static max := 0
 	ctrl.GetPos(&cpX, &cpY, &cpW, &cpH)
 	pos := cpY + cpH
-	if (pos > max){
+	if (pos > max) {
 		max := pos
 	}
 	return max
 }
 
-UpdateWidth(ctrl, reset := 0){
+UpdateWidth(ctrl, reset := 0) {
 	static max := 0
-	if (reset){
+	if (reset) {
 		max := 0
 		return
 	}
 	ctrl.GetPos(&cpX, &cpY, &cpW, &cpH)
-	if (cpW > max){
+	if (cpW > max) {
 		max := cpW
 	}
 	return max
 }
 
-CheckboxChanged(id, ctrl, info){
+CheckboxChanged(id, ctrl, info) {
 	global AHI
-	if (ctrl.Value){
-		if (id < 11){
+	if (ctrl.Value) {
+		if (id < 11) {
 			AHI.SubscribeKeyboard(id, false, KeyboardEvent.Bind(id))
 		} else {
 			AHI.SubscribeMouseButtons(id, false, MouseButtonEvent.Bind(id))
@@ -163,7 +163,7 @@ CheckboxChanged(id, ctrl, info){
 			AHI.SubscribeMouseMoveAbsolute(id, false, MouseAxisEvent.Bind(id, "Absolute Move"))
 		}
 	} else {
-		if (id < 11){
+		if (id < 11) {
 			AHI.UnsubscribeKeyboard(id)
 		} else {
 			AHI.UnsubscribeMouseButtons(id)
@@ -173,48 +173,48 @@ CheckboxChanged(id, ctrl, info){
 	}
 }
 
-FilterMove(ctrl, info){
+FilterMove(ctrl, info) {
 	global filterMouseMove
 	filterMouseMove := ctrl.Value
 }
 
-FilterPress(ctrl, info){
+FilterPress(ctrl, info) {
 	global filterKeyPress
 	filterKeyPress := ctrl.Value
 }
 
-ClearKeyboard(ctrl, info){
+ClearKeyboard(ctrl, info) {
 	global lvKeyboard
 	lvKeyboard.Delete()
 }
 
-ClearMouse(ctrl, info){
+ClearMouse(ctrl, info) {
 	global lvMouse
 	lvMouse.Delete()
 }
 
-FormatHex(num){
+FormatHex(num) {
 	return Format("{:04X}", num)
 }
 
 
-KeyboardEvent(id, code, state){
+KeyboardEvent(id, code, state) {
 	global lvKeyboard, filterKeyPress
-    if (filterKeyPress && state)
-        return
+	if (filterKeyPress && state)
+		return
 	scanCode := Format("{:x}", code)
 	keyName := GetKeyName("SC" scanCode)
 	row := lvKeyboard.Add(, id, code, state, keyName)
 	lvKeyboard.Modify(row, "Vis")
 }
 
-MouseButtonEvent(id, code, state){
+MouseButtonEvent(id, code, state) {
 	global lvMouse
 	row := lvMouse.Add(, id, code, state, "", "", "Button")
 	lvMouse.Modify(row, "Vis")
 }
 
-MouseAxisEvent(id, info, x, y){
+MouseAxisEvent(id, info, x, y) {
 	global lvMouse, filterMouseMove
 	if (filterMouseMove)
 		return
@@ -222,17 +222,17 @@ MouseAxisEvent(id, info, x, y){
 	lvMouse.Modify(row, "Vis")
 }
 
-CopyClipboard(str, ctrl, info){
+CopyClipboard(str, ctrl, info) {
 	A_Clipboard := str
 	Tooltip("Copied to Clipboard")
 	SetTimer(ClearTooltip, 1000)
 }
 
-ClearTooltip(){
+ClearTooltip() {
 	ToolTip
 }
 
-GuiClosed(gui){
+GuiClosed(gui) {
 	ExitApp
 }
 
